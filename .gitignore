@@ -1,0 +1,11 @@
+/target/
+**/*.rs.bk
+
+# Local SQLite index: derived from the Markdown files, never authoritative,
+# never shared between machines.
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+.DS_Store

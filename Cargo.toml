@@ -1,0 +1,25 @@
+[package]
+name = "agent-knowledge"
+version = "0.0.0"
+edition = "2024"
+description = "Operational memory for code repositories, shared between machines through Git and served to agents over MCP."
+readme = "README.md"
+publish = false
+
+# No [[bin]] target yet: the executable and CLI command names are still undecided.
+# See the pending-decisions list in the project documentation before adding one.
+
+[lib]
+name = "agent_knowledge"
+path = "src/lib.rs"
+
+[dependencies]
+
+[lints.rust]
+# D-010: the domain and persistence core stays in safe Rust. Unsafe is allowed only
+# in a small, justified, tested FFI boundary, and only by opting in explicitly there.
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

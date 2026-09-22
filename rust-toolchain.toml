@@ -1,0 +1,6 @@
+[toolchain]
+# Pinned to an exact version once the first persistence increment has been measured
+# on both platforms. Until then, tracking stable keeps macOS and Linux on the same
+# compiler without claiming a reproducibility guarantee the project has not verified.
+channel = "stable"
+components = ["rustfmt", "clippy"]
