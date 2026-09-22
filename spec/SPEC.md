@@ -5,7 +5,7 @@ Source of truth for **behavior**. Change a scenario when it is wrong or incomple
 - Why a technical choice was made, including every `D-xxx` reference below: [technical decisions](../docs/technical-decisions.md).
 - Product scope, users and non-goals: [product requirements](../docs/prd.md).
 - Component structure and data model: [technical design](../docs/tech-design.md).
-- When any document edit is worth making: [`../LEDGER.md`](../LEDGER.md). That file is not a session log.
+- Handoff for the next thread, and when any other document edit is worth making: [`../LEDGER.md`](../LEDGER.md).
 
 ## How to implement with an AI agent
 
@@ -13,7 +13,7 @@ Source of truth for **behavior**. Change a scenario when it is wrong or incomple
 2. For each scenario in that phase, write a Rust test whose name (or `///` doc line) matches the scenario name exactly.
 3. Make it pass. **Do not add the `cucumber` crate**: Gherkin is the spec, `cargo test` is the runner. Every dependency needs justification (D-001, D-010).
 4. The pull request is the code and the tests. One commit for the phase is enough. Do not add a task file or a write-up of what happened.
-5. Edit a document only in the cases [`../LEDGER.md`](../LEDGER.md) lists. A phase that follows the existing scenarios does not need a spec edit, a decision-log entry, or a status update in the README, the PRD, or the technical design.
+5. Before ending the phase, update **Where to continue** in [`../LEDGER.md`](../LEDGER.md): what is done, what is next, and what is blocked. That is the handoff. Do not repeat it in the README, the PRD, the technical design, or the decision log. Edit one of those only in the other cases the LEDGER lists: a wrong scenario, a name that was just decided, or a learning the diff does not show.
 
 Names still frozen as undecided (crate name, executable name, CLI command names, MCP tool names, frontmatter field names) must not be invented while implementing. Ask, and wait. The identity manifest filename and format are decided in D-016. See the pending list in the decision log.
 
