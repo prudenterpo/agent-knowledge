@@ -2,7 +2,7 @@
 
 This document records the decisions taken for the first version. It exists so that a future agent does not treat as an implicit requirement something that was a conscious choice. When a decision changes, the earlier record is marked as superseded rather than deleted — so that the next revision does not reopen an already-walked path without knowing why.
 
-This document holds **decisions only** — the "why". What the product is and who it serves: [product requirements](./prd.md). What behavior is expected, as testable scenarios, and in what order to build it: [the behavior specification](../spec/SPEC.md). Which components exist and what shape the data has: [technical design](./tech-design.md). Earlier reasoning and discarded paths: [context and brainstorming](./context-and-brainstorming.md).
+This document holds **decisions only** — the "why". What the product is and who it serves: [product requirements](./prd.md). What behavior is expected, as testable scenarios, and in what order to build it: [the behavior specification](../spec/SPEC.md). Which components exist and what shape the data has: [technical design](./tech-design.md).
 
 ## Principles governing these decisions
 

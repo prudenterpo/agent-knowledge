@@ -8,7 +8,7 @@ The goal is not to build a broad, general-purpose memory platform for agent team
 
 The first product is written in Rust. That allows learning applied systems programming while solving the real problem, without subordinating usefulness, data integrity, compatibility or maintainability to the exercise of manual memory management. The implementation is meant to be followed in detail: every module, ownership boundary, system resource, native dependency and architectural choice must be explainable.
 
-How this scope was reached: [context and brainstorming](./context-and-brainstorming.md). Implementation choices: [technical decisions](./technical-decisions.md). Component structure: [technical design](./tech-design.md). The acceptance criteria below are expressed as testable scenarios in [the behavior specification](../spec/SPEC.md).
+Implementation choices: [technical decisions](./technical-decisions.md). Component structure: [technical design](./tech-design.md). The acceptance criteria below are expressed as testable scenarios in [the behavior specification](../spec/SPEC.md).
 
 ## Problem
 
