@@ -4,7 +4,7 @@
 
 Agent Knowledge is operational memory for a code repository, shared between the author's macOS and Linux machines through a Git repository dedicated to memory data — no central server, no always-on instance. It lets AI agents recover a project's essential context and record durable knowledge across sessions and across machines: decisions, traps, procedures, and where the work stopped.
 
-The goal is not to reproduce [ai-memory](https://github.com/akitaonrails/ai-memory) nor to build an agent observability platform. It is to solve, in a small and verifiable way, the loss of context when starting a new session, switching agents, switching machines, or resuming a task days later. The result must be a functional, reliable tool for personal and professional use — not just a programming exercise.
+The goal is not to build a broad, general-purpose memory platform for agent teams, nor an agent observability platform. It is to solve, in a small and verifiable way, the loss of context when starting a new session, switching agents, switching machines, or resuming a task days later. The result must be a functional, reliable tool for personal and professional use — not just a programming exercise.
 
 The first product is written in Rust. That allows learning applied systems programming while solving the real problem, without subordinating usefulness, data integrity, compatibility or maintainability to the exercise of manual memory management. The implementation is meant to be followed in detail: every module, ownership boundary, system resource, native dependency and architectural choice must be explainable.
 
