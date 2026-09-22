@@ -6,7 +6,7 @@ This document holds **decisions only** — the "why". What the product is and wh
 
 ## Principles governing these decisions
 
-1. Solve real continuity of context across agents, repositories and machines — do not reproduce ai-memory.
+1. Solve real continuity of context across agents, repositories and machines, deliberately kept small.
 2. Prioritize usefulness, reliability, integrity and maintainability over the learning goal.
 3. Learn Rust and systems fundamentals by building the product that is needed, without adding mechanisms just to exercise the language.
 4. Remove optional automation and intelligence before removing durability, search, compatibility or data integrity.
