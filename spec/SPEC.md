@@ -70,7 +70,7 @@ Scenarios: `Feature: Briefing`, `Feature: Handoff`.
 
 Human operations over the same core: init, inspect, search, create, update, obsolete, force sync, rebuild index. Distinct exit codes per error category.
 
-Scenarios: covered by the CLI variants noted inside the features above.
+Scenarios: all of `Feature: CLI`.
 
 ### 7. MCP adapter
 
@@ -94,6 +94,7 @@ Scenarios: `Feature: Cross-machine continuity`.
 | Briefing | briefing assembler, ordering and quota rules |
 | Handoff | record store, active/inactive transition |
 | Git synchronization | sync layer (pull/commit/push), conflict detection |
+| CLI | CLI adapter, exit code mapping |
 | MCP protocol | MCP adapter, input validation, stdout/stderr discipline |
 | Cross-machine continuity | end-to-end, no single module |
 
@@ -223,6 +224,12 @@ Feature: Knowledge records
     Given records of every category, some obsolete for a long time
     When any normal operation runs
     Then no record file is removed
+
+  Scenario: A frontmatter format newer than supported is refused per file
+    Given a record whose frontmatter declares a format version newer than the client supports
+    When I read or index the project's records
+    Then that specific file is refused with an actionable error
+    And every other record in the project is still readable
 ```
 
 ## Feature: Search
@@ -439,6 +446,60 @@ Feature: Git synchronization
   Scenario: The SQLite index never travels through Git
     When any operation writes to the memory repository
     Then no SQLite file is added, committed or pushed
+
+  Scenario: Local clone and index are created with restricted permissions
+    When the memory repository is cloned or the local index is created
+    Then neither is readable by another user on the machine
+```
+
+## Feature: CLI
+
+```gherkin
+Feature: CLI
+  As a developer inspecting or driving memory by hand
+  I want predictable exit codes
+  So that scripts and my own judgment can tell success from each kind of failure apart
+
+  Scenario: Success exits zero
+    Given a well-formed command that completes without error
+    When it runs
+    Then the process exits with the code for success
+
+  Scenario: Invalid input exits with its own code
+    Given a command with missing or malformed arguments
+    When it runs
+    Then the process exits with the code for invalid input
+    And the reason is printed before exiting
+
+  Scenario: A revision conflict exits with its own code
+    Given a write whose declared revision no longer matches the record
+    When it runs
+    Then the process exits with the code for conflict
+    And the exit code is distinct from invalid input and from internal failure
+
+  Scenario: Failure to synchronize exits with its own code
+    Given no connectivity to the Git remote
+    When a command that needs synchronization runs
+    Then the process exits with the code for synchronization unavailable
+    And that code is distinct from a revision conflict
+
+  Scenario: An internal failure exits with its own code
+    Given a local persistence failure, such as a full disk
+    When a command hits it
+    Then the process exits with the code for internal failure
+    And the message does not expose internal library detail
+
+  Scenario: Forcing synchronization is available as its own operation
+    Given records written locally but not yet pushed
+    When I ask the CLI to synchronize
+    Then it pulls, resolves what it can, and pushes
+    And it reports what, if anything, is still unsynchronized
+
+  Scenario: Rebuilding the index is available as its own operation
+    Given a local index believed to be stale or corrupted
+    When I ask the CLI to rebuild it
+    Then it is deleted and rebuilt from the memory repository's files
+    And no record content is altered by that operation
 ```
 
 ## Feature: MCP protocol
