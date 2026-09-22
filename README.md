@@ -1,18 +1,8 @@
 # Agent Knowledge
 
-Picking this up, in any thread, for any reason? Read [`LEDGER.md`](LEDGER.md) first — it is the current state, replaced every time a session ends, not an ongoing log.
-
 Operational memory for a code repository: what was decided and why, which traps were already hit, which procedures worked, and where the last session stopped.
 
 Agents read and write it over [MCP](https://modelcontextprotocol.io); a human reads and writes it over a CLI. Knowledge is stored as Markdown files in a dedicated Git repository, so it travels between machines through Git itself — there is no server and no always-on process.
-
-## Status
-
-**Project identity is implemented.** Initializing a code repository writes `.agent-knowledge.toml` and creates a directory named after that id in the memory repository. Starting in a directory without that file reports that the project is not initialized. Search lists only the open project's records and does not take a project id.
-
-Records, the SQLite index, Git sync, briefing, handoff, the CLI and the MCP adapter are not implemented yet. `spec/SPEC.md` holds the rest of the behavior contract.
-
-Product scope: [`docs/prd.md`](docs/prd.md). Why each technical choice was made: [`docs/technical-decisions.md`](docs/technical-decisions.md). Component structure: [`docs/tech-design.md`](docs/tech-design.md).
 
 ## Shape of the system
 
@@ -34,4 +24,6 @@ CI runs the same three on Ubuntu and macOS, plus a dependency audit.
 
 ## Working on this repository
 
-`spec/SPEC.md` is the source of truth for behavior and how to implement it. Several public names are deliberately undecided — see the pending list at the end of `docs/technical-decisions.md` — and must not be invented while implementing.
+[`spec/SPEC.md`](spec/SPEC.md) is the behavior contract. [`LEDGER.md`](LEDGER.md) says when a document edit is worth making. A thread does not update these files just because work happened.
+
+Product scope: [`docs/prd.md`](docs/prd.md). Why a choice was made: [`docs/technical-decisions.md`](docs/technical-decisions.md). Component structure: [`docs/tech-design.md`](docs/tech-design.md). Names on the pending list at the end of the decision log must not be invented while implementing.
