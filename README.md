@@ -30,4 +30,4 @@ CI runs the same three on Ubuntu and macOS, plus a dependency audit.
 
 ## Working on this repository
 
-Read `AGENTS.md` first — it is short, and it covers the rules that matter: the spec is the source of truth for behavior, several public names are deliberately undecided, and everything that lands in git is English.
+`spec/SPEC.md` is the source of truth for behavior and how to implement it. Several public names are deliberately undecided — see the pending list at the end of `docs/technical-decisions.md` — and must not be invented while implementing.

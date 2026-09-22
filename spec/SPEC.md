@@ -6,8 +6,6 @@ Source of truth for **behavior**. If behavior changes, change the scenario here 
 - Product scope, users and non-goals: [product requirements](../docs/prd.md).
 - Component structure and data model: [technical design](../docs/tech-design.md).
 
-Repository rules for contributors and agents: see `AGENTS.md`.
-
 ## How to implement with an AI agent
 
 1. Take the next phase below. Do not skip ahead.
