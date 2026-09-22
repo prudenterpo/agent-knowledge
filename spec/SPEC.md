@@ -1,6 +1,6 @@
 # Agent Knowledge — behavior specification
 
-Source of truth for **behavior**. If behavior changes, change the scenario here first.
+Source of truth for **behavior**. If behavior changes, change the scenario here first. If you have not read [`../LEDGER.md`](../LEDGER.md) yet, read that first instead — it says which phase is current.
 
 - Why each technical choice was made, including every `D-xxx` reference below: [technical decisions](../docs/technical-decisions.md).
 - Product scope, users and non-goals: [product requirements](../docs/prd.md).

@@ -1,5 +1,7 @@
 # Agent Knowledge
 
+Picking this up, in any thread, for any reason? Read [`LEDGER.md`](LEDGER.md) first — it is the current state, replaced every time a session ends, not an ongoing log.
+
 Operational memory for a code repository: what was decided and why, which traps were already hit, which procedures worked, and where the last session stopped.
 
 Agents read and write it over [MCP](https://modelcontextprotocol.io); a human reads and writes it over a CLI. Knowledge is stored as Markdown files in a dedicated Git repository, so it travels between machines through Git itself — there is no server and no always-on process.
@@ -31,5 +33,3 @@ CI runs the same three on Ubuntu and macOS, plus a dependency audit.
 ## Working on this repository
 
 `spec/SPEC.md` is the source of truth for behavior and how to implement it. Several public names are deliberately undecided — see the pending list at the end of `docs/technical-decisions.md` — and must not be invented while implementing.
-
-Picking this up for the first time, or after a break? Read [`docs/handoff.md`](docs/handoff.md) once — it is a static note about where planning stopped and implementation should start, not an ongoing artifact.
