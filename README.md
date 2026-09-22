@@ -8,7 +8,9 @@ Agents read and write it over [MCP](https://modelcontextprotocol.io); a human re
 
 ## Status
 
-**Foundation only.** No behavior is implemented yet. `spec/SPEC.md` holds the behavior contract and the implementation phases; nothing in this repository claims to work beyond building cleanly.
+**Project identity is implemented.** Initializing a code repository writes `.agent-knowledge.toml` and creates a directory named after that id in the memory repository. Starting in a directory without that file reports that the project is not initialized. Search lists only the open project's records and does not take a project id.
+
+Records, the SQLite index, Git sync, briefing, handoff, the CLI and the MCP adapter are not implemented yet. `spec/SPEC.md` holds the rest of the behavior contract.
 
 Product scope: [`docs/prd.md`](docs/prd.md). Why each technical choice was made: [`docs/technical-decisions.md`](docs/technical-decisions.md). Component structure: [`docs/tech-design.md`](docs/tech-design.md).
 

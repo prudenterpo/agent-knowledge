@@ -14,7 +14,7 @@ Source of truth for **behavior**. If behavior changes, change the scenario here 
 4. One commit per phase. Do not add task files, status docs or process scaffolding to "organize the work".
 5. If a scenario turns out to be wrong or impossible, change the scenario here and say so — never leave code and spec disagreeing.
 
-Names still frozen as undecided (crate name, executable name, CLI command names, MCP tool names, manifest filename, frontmatter field names) must not be invented while implementing. See the pending list in the decision log.
+Names still frozen as undecided (crate name, executable name, CLI command names, MCP tool names, frontmatter field names) must not be invented while implementing. The identity manifest filename and format are decided in D-016. See the pending list in the decision log.
 
 ## When knowledge should be registered
 
