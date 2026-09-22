@@ -140,7 +140,7 @@ This document holds **decisions only** — the "why". What the product is and wh
 
 **Reason:** absolute path, directory name and Git remote are not stable identities. Accepting an arbitrary identifier on every tool call would also raise the risk of accidental leakage between projects.
 
-**Consequences:** the manifest in the code repository points at a directory of the same name inside the memory repository (D-003), where that project's records actually live. Clones and worktrees that preserve the manifest can share the identity. A fork that needs separate memory must be given a new identity explicitly. The manifest's name and format will be chosen before implementing the public interface.
+**Consequences:** the manifest in the code repository points at a directory of the same name inside the memory repository (D-003), where that project's records actually live. Clones and worktrees that preserve the manifest can share the identity. A fork that needs separate memory must be given a new identity explicitly. The manifest's name and format were chosen in D-016 before the identity interface was implemented.
 
 ## D-012 — Bounded, deterministic briefing
 
@@ -194,6 +194,14 @@ Mechanically:
 
 **Trigger to revisit:** if the usage pattern changes to simultaneous — an agent active on both machines at the same time on the same project — Git stops guaranteeing real-time visibility, and D-014 becomes the correct decision again.
 
+## D-016 — Identity manifest file
+
+**Decision:** the identity manifest is `.agent-knowledge.toml` at the root of the code repository. The file is a restricted TOML document of exactly four keys: `id` (lowercase UUID version 4), `version` (integer; this client accepts only 1), `created` and `updated` (UTC timestamps written as `YYYY-MM-DDTHH:MM:SSZ`). Blank lines and whole-line `#` comments are allowed. A client that does not understand `version`, or that cannot parse the file, refuses it and does not overwrite it.
+
+**Reason:** phase 1 cannot resolve identity without a filename and a format, and both were frozen until an explicit choice. On 2026-09-22 the author confirmed this filename (or whichever spelling the implementation preferred). The four fields are the ones the technical design already required for a project: immutable identifier, format version, creation date and update date. A four-field parser keeps the dependency list empty (D-001, D-010).
+
+**Consequences:** `initialize` creates the file by writing a temporary sibling and renaming it into place, then creates `{memory repository}/{id}` with mode `0700`. `start` reads the file from the working directory it is given and binds that run to that id. The memory repository's own name and location stay undecided; callers pass the path. Re-initializing a valid manifest keeps the original id and does not create a second directory.
+
 ## Implementation sequence
 
 The implementation phases, and the scenarios each one must turn green, live in [the behavior specification](../spec/SPEC.md), not here — this document records decisions, not an execution plan.
@@ -208,7 +216,6 @@ The items below require an explicit choice or measurement before public contract
 - the name and visibility of the Git repository dedicated to memory (recommended: private);
 - the visibility and license of the code repository;
 - the executable name and the CLI command names;
-- the name and format of the identity manifest in the code repository;
 - the exact Markdown frontmatter format: fields, names, serialization of dates and revision;
 - the names and schemas of the MCP tools;
 - the Rust library used to drive Git (shelling out to `git` vs. a crate such as `git2`) and what that implies for FFI/unsafe under D-010;

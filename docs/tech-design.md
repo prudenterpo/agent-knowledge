@@ -50,6 +50,8 @@ Practical consequence for testing: the core is entirely exercisable offline. An 
 - resolve, from that identifier, the corresponding directory inside the local memory repository;
 - refuse operations when the project is not initialized or the manifest is invalid.
 
+The manifest file is `.agent-knowledge.toml` in the working directory (D-016). It stores the immutable identifier, the identity format version, and the creation and update timestamps. The memory repository path is supplied by the caller; this component does not choose that repository's name or location.
+
 Path, directory name and the code repository's remote URL play no part in identity.
 
 ### Application core
