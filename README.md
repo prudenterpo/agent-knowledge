@@ -8,6 +8,8 @@ Agents read and write it over [MCP](https://modelcontextprotocol.io); a human re
 
 **Foundation only.** No behavior is implemented yet. `spec/SPEC.md` holds the behavior contract and the implementation phases; nothing in this repository claims to work beyond building cleanly.
 
+Product scope: [`docs/prd.md`](docs/prd.md). Why each technical choice was made: [`docs/technical-decisions.md`](docs/technical-decisions.md). Component structure: [`docs/tech-design.md`](docs/tech-design.md).
+
 ## Shape of the system
 
 - **Source of truth:** Markdown files with frontmatter, in a separate Git repository, one directory per project id, one file per record.

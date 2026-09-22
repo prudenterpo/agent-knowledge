@@ -2,7 +2,9 @@
 
 Source of truth for **behavior**. If behavior changes, change the scenario here first.
 
-The product definition, the decision log (D-001 … D-015) and the component design still live in the planning vault and are being migrated into `docs/`. Until they land here, the `D-xxx` identifiers used below refer to entries in that decision log.
+- Why each technical choice was made, including every `D-xxx` reference below: [technical decisions](../docs/technical-decisions.md).
+- Product scope, users and non-goals: [product requirements](../docs/prd.md).
+- Component structure and data model: [technical design](../docs/tech-design.md).
 
 Repository rules for contributors and agents: see `AGENTS.md`.
 

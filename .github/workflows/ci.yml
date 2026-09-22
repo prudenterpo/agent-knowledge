@@ -22,6 +22,8 @@ jobs:
       - name: Install toolchain
         run: rustup show
 
+      - uses: Swatinem/rust-cache@v2
+
       - name: Format
         run: cargo fmt --all --check
 
@@ -36,6 +38,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: rustsec/audit-check@v2
+
+      # A prebuilt binary from cargo-audit's own releases, instead of compiling
+      # its ~15 dependencies from source on every run (~6 minutes each time).
+      - uses: taiki-e/install-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tool: cargo-audit
+
+      - name: Audit
+        run: cargo audit
