@@ -24,6 +24,6 @@ CI runs the same three on Ubuntu and macOS, plus a dependency audit.
 
 ## Working on this repository
 
-[`spec/SPEC.md`](spec/SPEC.md) is the behavior contract. [`LEDGER.md`](LEDGER.md) says when a document edit is worth making. A thread does not update these files just because work happened.
+[`spec/SPEC.md`](spec/SPEC.md) is the behavior contract. [`LEDGER.md`](LEDGER.md) is the handoff: what is done, what is next, and what is blocked. Update that section when it would otherwise send the next thread the wrong way. Do not repeat it in the other documents.
 
 Product scope: [`docs/prd.md`](docs/prd.md). Why a choice was made: [`docs/technical-decisions.md`](docs/technical-decisions.md). Component structure: [`docs/tech-design.md`](docs/tech-design.md). Names on the pending list at the end of the decision log must not be invented while implementing.
