@@ -1,20 +1,21 @@
 # Agent Knowledge — behavior specification
 
-Source of truth for **behavior**. If behavior changes, change the scenario here first. If you have not read [`../LEDGER.md`](../LEDGER.md) yet, read that first instead — it says which phase is current.
+Source of truth for **behavior**. Change a scenario when it is wrong or incomplete. Leave this file alone when the code already follows it.
 
-- Why each technical choice was made, including every `D-xxx` reference below: [technical decisions](../docs/technical-decisions.md).
+- Why a technical choice was made, including every `D-xxx` reference below: [technical decisions](../docs/technical-decisions.md).
 - Product scope, users and non-goals: [product requirements](../docs/prd.md).
 - Component structure and data model: [technical design](../docs/tech-design.md).
+- Handoff for the next thread, and when any other document edit is worth making: [`../LEDGER.md`](../LEDGER.md).
 
 ## How to implement with an AI agent
 
 1. Take the next phase below. Do not skip ahead.
 2. For each scenario in that phase, write a Rust test whose name (or `///` doc line) matches the scenario name exactly.
 3. Make it pass. **Do not add the `cucumber` crate**: Gherkin is the spec, `cargo test` is the runner. Every dependency needs justification (D-001, D-010).
-4. One commit per phase. Do not add task files, status docs or process scaffolding to "organize the work".
-5. If a scenario turns out to be wrong or impossible, change the scenario here and say so — never leave code and spec disagreeing.
+4. The pull request is the code and the tests. One commit for the phase is enough. Do not add a task file or a write-up of what happened.
+5. Before ending the phase, update **Where to continue** in [`../LEDGER.md`](../LEDGER.md): what is done, what is next, and what is blocked. That is the handoff. Do not repeat it in the README, the PRD, the technical design, or the decision log. Edit one of those only in the other cases the LEDGER lists: a wrong scenario, a name that was just decided, or a learning the diff does not show.
 
-Names still frozen as undecided (crate name, executable name, CLI command names, MCP tool names, manifest filename, frontmatter field names) must not be invented while implementing. See the pending list in the decision log.
+Names still frozen as undecided (crate name, executable name, CLI command names, MCP tool names, frontmatter field names) must not be invented while implementing. Ask, and wait. The identity manifest filename and format are decided in D-016. See the pending list in the decision log.
 
 ## When knowledge should be registered
 
