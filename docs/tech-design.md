@@ -9,7 +9,6 @@ This document does not repeat what already lives elsewhere:
 - **why** each choice was made, and what is still undecided → [technical decisions](./technical-decisions.md);
 - **what behavior** is expected, as testable scenarios, and in what order to build it → [the behavior specification](../spec/SPEC.md);
 - product scope, users and non-goals → [product requirements](./prd.md);
-- discarded paths and history → [context and brainstorming](./context-and-brainstorming.md).
 
 If anything here contradicts one of those, they take precedence — this file describes shape, not decision or behavior contract.
 
