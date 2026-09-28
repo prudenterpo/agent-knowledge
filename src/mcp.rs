@@ -4,7 +4,10 @@ use std::io::{BufRead, Write};
 
 use serde_json::{Value, json};
 
-use crate::{Error, HandoffStore, KnowledgeStore, WriteHandoff, render_briefing};
+use crate::{
+    CreateRecord, Error, HandoffStore, KnowledgeStore, RecordCategory, UpdateRecord, WriteHandoff,
+    render_briefing,
+};
 
 const MAX_MESSAGE_BYTES: usize = 1024 * 1024;
 
@@ -77,6 +80,40 @@ fn call_tool(store: &KnowledgeStore, params: &Value) -> Result<Value, Error> {
             )
         }
         "agent_knowledge_get_record" => Ok(record_json(&store.get(string(arguments, "id")?)?)),
+        "agent_knowledge_create_record" => {
+            let record = store.create(CreateRecord {
+                title: string(arguments, "title")?,
+                category: category(string(arguments, "category")?)?,
+                content: string(arguments, "content")?,
+                priority: arguments
+                    .get("priority")
+                    .and_then(Value::as_u64)
+                    .map(|value| value as u8),
+                pinned: arguments.get("pinned").and_then(Value::as_bool),
+                supersedes: arguments.get("supersedes").and_then(Value::as_str),
+            })?;
+            Ok(record_json(&record))
+        }
+        "agent_knowledge_update_record" => {
+            let expected = arguments
+                .get("expected_revision")
+                .and_then(Value::as_u64)
+                .ok_or_else(|| Error::Validation("expected_revision is required".to_string()))?;
+            let record = store.update(
+                string(arguments, "id")?,
+                expected,
+                UpdateRecord {
+                    content: arguments.get("content").and_then(Value::as_str),
+                    title: arguments.get("title").and_then(Value::as_str),
+                    priority: arguments
+                        .get("priority")
+                        .and_then(Value::as_u64)
+                        .map(|value| value as u8),
+                    ..UpdateRecord::default()
+                },
+            )?;
+            Ok(record_json(&record))
+        }
         "agent_knowledge_list_handoffs" => Ok(
             json!({"handoffs": HandoffStore::new(store.project()).previous()?.iter().map(|handoff| json!({"id":handoff.id,"revision":handoff.revision,"content":handoff.content})).collect::<Vec<_>>() }),
         ),
@@ -102,6 +139,17 @@ fn string<'a>(value: &'a Value, field: &str) -> Result<&'a str, Error> {
         .get(field)
         .and_then(Value::as_str)
         .ok_or_else(|| Error::Validation(format!("{field} is required")))
+}
+fn category(value: &str) -> Result<RecordCategory, Error> {
+    match value {
+        "decision" => Ok(RecordCategory::Decision),
+        "gotcha" => Ok(RecordCategory::Gotcha),
+        "procedure" => Ok(RecordCategory::Procedure),
+        "note" => Ok(RecordCategory::Note),
+        _ => Err(Error::Validation(
+            "category must be decision, gotcha, procedure or note".to_string(),
+        )),
+    }
 }
 fn tool_names() -> Vec<&'static str> {
     vec![
