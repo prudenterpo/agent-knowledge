@@ -20,5 +20,6 @@ Blocked: the frontmatter field names and the record file-naming strategy are sti
 
 ## Standing constraints
 
+- Never use `cursor/` in a branch name. Never write `cursor` in a commit message, a pull request title, or a pull request body. No exception.
 - Never add AI-attribution lines to a commit, PR, issue, or comment. No "Co-Authored-By: Claude", no "Generated with Claude Code".
 - Do not reintroduce mention of another long-term-memory-for-agents project. Those references were removed on purpose.
