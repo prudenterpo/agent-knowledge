@@ -325,3 +325,24 @@ fn updating_a_handoff_requires_the_expected_revision() {
         Err(agent_knowledge::Error::RevisionConflict(_))
     ));
 }
+
+/// No failure leaves two active handoffs
+#[test]
+fn no_failure_leaves_two_active_handoffs() {
+    let fixture = Fixture::new();
+    let active = fixture.handoffs().write(None, handoff()).unwrap();
+    let invalid = WriteHandoff {
+        completed: "",
+        pending: "pending",
+        decisions_or_limitations: "limit",
+        next_step: "next",
+    };
+    assert!(
+        fixture
+            .handoffs()
+            .write(Some(active.revision), invalid)
+            .is_err()
+    );
+    assert_eq!(fixture.handoffs().active().unwrap().unwrap().id, active.id);
+    assert!(fixture.handoffs().previous().unwrap().is_empty());
+}
