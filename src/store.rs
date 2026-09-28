@@ -287,6 +287,14 @@ impl KnowledgeStore {
         Ok(SearchResults { records, truncated })
     }
 
+    /// Read every valid record in deterministic file-name order.
+    pub fn records(&self) -> Result<Vec<Record>, Error> {
+        self.record_paths()?
+            .into_iter()
+            .map(|path| read_record(&path))
+            .collect()
+    }
+
     /// Recreate the entire local index from authoritative Markdown files.
     pub fn rebuild_index(&self) -> Result<(), Error> {
         let temporary = self.index_path.with_extension("sqlite.rebuild");
