@@ -12,7 +12,7 @@ Edit another document only when one of these is also true:
 
 ## Where to continue
 
-Done: phases 1 through 7 are implemented on feature/agent-knowledge-v1: Markdown/TOML records, SQLite FTS5 recovery, Git synchronization, deterministic briefing and single active handoff, CLI, and stdio MCP. Local Linux evidence: cargo fmt --all --check, cargo clippy --all-targets -- -D warnings, cargo test --all-targets (33 tests), and cargo doc --no-deps passed. CI now runs Linux x86_64 and macOS aarch64 (macos-14); its dependency-audit job remains configured. cargo-audit was not present locally and its temporary installation did not complete in the available run.
+Done: phases 1 through 7 are implemented on feature/agent-knowledge-v1: Markdown/TOML records, SQLite FTS5 recovery, Git synchronization, deterministic briefing and single active handoff, CLI, and stdio MCP. Local Linux evidence: cargo fmt --all --check, cargo clippy --all-targets -- -D warnings, cargo test --all-targets (40 tests), and cargo doc --no-deps passed. CI now runs Linux x86_64 and macOS aarch64 (macos-14); its dependency-audit job remains configured. cargo-audit was not present locally and its temporary installation did not complete in the available run.
 
 Next: review the single pull request, including CI results on both supported targets. Do not start the real-repository pilot in phase 8 without explicit authorization.
 
