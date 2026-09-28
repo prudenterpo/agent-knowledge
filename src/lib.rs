@@ -16,10 +16,12 @@
 //! become a test whose name matches the scenario name exactly.
 
 mod error;
+mod git_sync;
 mod identity;
 mod store;
 
 pub use error::Error;
+pub use git_sync::GitSync;
 pub use identity::{FORMAT_VERSION, MANIFEST_FILE_NAME, Project, ProjectId, initialize, start};
 pub use store::{
     CreateRecord, KnowledgeStore, Record, RecordCategory, RecordState, SearchResults, UpdateRecord,
