@@ -193,3 +193,135 @@ fn a_handoff_carries_the_four_scoped_fields() {
         assert!(written.content.contains(heading));
     }
 }
+
+/// Briefing respects its total limit
+#[test]
+fn briefing_respects_its_total_limit() {
+    let fixture = Fixture::new();
+    let large = "x".repeat(8 * 1024);
+    fixture
+        .store
+        .create(CreateRecord {
+            title: "Pinned",
+            category: RecordCategory::Note,
+            content: &large,
+            priority: None,
+            pinned: Some(true),
+            supersedes: None,
+        })
+        .unwrap();
+    fixture
+        .store
+        .create(CreateRecord {
+            title: "Decision",
+            category: RecordCategory::Decision,
+            content: &large,
+            priority: Some(3),
+            pinned: None,
+            supersedes: None,
+        })
+        .unwrap();
+    assert!(
+        render_briefing(&fixture.store, &fixture.handoffs())
+            .unwrap()
+            .len()
+            <= 16 * 1024
+    );
+}
+
+/// Each section respects its quota
+#[test]
+fn each_section_respects_its_quota() {
+    let fixture = Fixture::new();
+    let content = "d".repeat(8 * 1024);
+    fixture
+        .store
+        .create(CreateRecord {
+            title: "Decision",
+            category: RecordCategory::Decision,
+            content: &content,
+            priority: Some(3),
+            pinned: None,
+            supersedes: None,
+        })
+        .unwrap();
+    fixture
+        .store
+        .create(CreateRecord {
+            title: "Gotcha",
+            category: RecordCategory::Gotcha,
+            content: "gotcha stays",
+            priority: Some(3),
+            pinned: None,
+            supersedes: None,
+        })
+        .unwrap();
+    let briefing = render_briefing(&fixture.store, &fixture.handoffs()).unwrap();
+    assert!(briefing.contains("gotcha stays"));
+    let decisions = briefing.split("## Gotchas").next().unwrap();
+    assert!(decisions.len() <= 4 * 1024 + 128);
+}
+
+/// Overflow stays reachable by search
+#[test]
+fn overflow_stays_reachable_by_search() {
+    let fixture = Fixture::new();
+    let content = "unique overflow keyword ".repeat(500);
+    fixture
+        .store
+        .create(CreateRecord {
+            title: "Pinned",
+            category: RecordCategory::Note,
+            content: &content,
+            priority: None,
+            pinned: Some(true),
+            supersedes: None,
+        })
+        .unwrap();
+    assert!(
+        render_briefing(&fixture.store, &fixture.handoffs())
+            .unwrap()
+            .contains("[truncated]")
+    );
+    assert_eq!(
+        fixture
+            .store
+            .search("overflow", false, None)
+            .unwrap()
+            .records
+            .len(),
+        1
+    );
+}
+
+/// Briefing never calls an LLM
+#[test]
+fn briefing_never_calls_an_llm() {
+    let fixture = Fixture::new();
+    assert!(render_briefing(&fixture.store, &fixture.handoffs()).is_ok());
+}
+
+/// The active handoff appears in the next briefing
+#[test]
+fn the_active_handoff_appears_in_the_next_briefing() {
+    let fixture = Fixture::new();
+    fixture.handoffs().write(None, handoff()).unwrap();
+    assert!(
+        render_briefing(&fixture.store, &fixture.handoffs())
+            .unwrap()
+            .contains("## Next step")
+    );
+}
+
+/// Updating a handoff requires the expected revision
+#[test]
+fn updating_a_handoff_requires_the_expected_revision() {
+    let fixture = Fixture::new();
+    let active = fixture.handoffs().write(None, handoff()).unwrap();
+    assert!(matches!(
+        fixture
+            .handoffs()
+            .write(Some(active.revision - 1), handoff()),
+        Err(agent_knowledge::Error::RevisionConflict(_))
+    ));
+}

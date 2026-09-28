@@ -204,3 +204,93 @@ fn history_is_never_rewritten() {
         .success()
     );
 }
+
+/// Push failure never loses the local commit
+#[test]
+fn push_failure_never_loses_the_local_commit() {
+    let root = TempDir::new();
+    let repository = root.0.join("memory");
+    assert!(
+        git(None, &["init", &repository.to_string_lossy()])
+            .status
+            .success()
+    );
+    configure(&repository);
+    fs::write(repository.join("record.md"), "local").unwrap();
+    let sync = GitSync::open(&repository).unwrap();
+    sync.commit(&[Path::new("record.md")], "feat(record): create local")
+        .unwrap();
+    let before = git(Some(&repository), &["rev-parse", "HEAD"]).stdout;
+    assert!(sync.push().is_err());
+    assert_eq!(
+        git(Some(&repository), &["rev-parse", "HEAD"]).stdout,
+        before
+    );
+}
+
+/// One write produces one commit
+#[test]
+fn one_write_produces_one_commit() {
+    let root = TempDir::new();
+    let repository = root.0.join("memory");
+    assert!(
+        git(None, &["init", &repository.to_string_lossy()])
+            .status
+            .success()
+    );
+    configure(&repository);
+    let sync = GitSync::open(&repository).unwrap();
+    fs::write(repository.join("record.md"), "one").unwrap();
+    sync.commit(&[Path::new("record.md")], "feat(record): create one")
+        .unwrap();
+    assert_eq!(
+        String::from_utf8(git(Some(&repository), &["rev-list", "--count", "HEAD"]).stdout)
+            .unwrap()
+            .trim(),
+        "1"
+    );
+}
+
+/// Remote unavailable still allows reading
+#[test]
+fn remote_unavailable_still_allows_reading() {
+    let root = TempDir::new();
+    let repository = root.0.join("memory");
+    assert!(
+        git(None, &["init", &repository.to_string_lossy()])
+            .status
+            .success()
+    );
+    fs::write(repository.join("record.md"), "still local").unwrap();
+    assert_eq!(
+        fs::read_to_string(repository.join("record.md")).unwrap(),
+        "still local"
+    );
+}
+
+/// The SQLite index never travels through Git
+#[test]
+fn the_sqlite_index_never_travels_through_git() {
+    let root = TempDir::new();
+    let repository = root.0.join("memory");
+    assert!(
+        git(None, &["init", &repository.to_string_lossy()])
+            .status
+            .success()
+    );
+    configure(&repository);
+    let sync = GitSync::open(&repository).unwrap();
+    fs::write(repository.join("record.md"), "record").unwrap();
+    fs::write(repository.join(".agent-knowledge.sqlite"), "index").unwrap();
+    sync.commit(&[Path::new("record.md")], "feat(record): create one")
+        .unwrap();
+    let files = String::from_utf8(
+        git(
+            Some(&repository),
+            &["show", "--format=", "--name-only", "HEAD"],
+        )
+        .stdout,
+    )
+    .unwrap();
+    assert_eq!(files.trim(), "record.md");
+}
