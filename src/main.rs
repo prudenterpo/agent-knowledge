@@ -5,8 +5,8 @@ use std::io::{self, BufReader};
 use std::path::PathBuf;
 
 use agent_knowledge::{
-    CreateRecord, Error, HandoffStore, KnowledgeStore, RecordCategory, UpdateRecord, WriteHandoff,
-    initialize, render_briefing, serve_mcp, start,
+    CreateRecord, Error, GitSync, HandoffStore, KnowledgeStore, RecordCategory, UpdateRecord,
+    WriteHandoff, initialize, render_briefing, serve_mcp, start,
 };
 
 fn main() {
@@ -35,7 +35,7 @@ fn run(arguments: Vec<String>) -> Result<(), Error> {
         "briefing" => print!("{}", render_briefing(&store, &HandoffStore::new(store.project()))?),
         "handoff" => { let handoff = HandoffStore::new(store.project()).write(None, WriteHandoff { completed: required(&values, 0, "completed")?, pending: required(&values, 1, "pending")?, decisions_or_limitations: required(&values, 2, "decisions_or_limitations")?, next_step: required(&values, 3, "next_step")? })?; println!("{} r{}", handoff.id, handoff.revision); }
         "rebuild-index" => { store.rebuild_index()?; println!("index rebuilt"); }
-        "sync" => return Err(Error::Synchronization("sync requires a configured Git memory clone; use the core GitSync adapter".to_string())),
+        "sync" => { GitSync::open(&memory)?.synchronize()?; println!("synchronized"); }
         "mcp" => serve_mcp(&store, BufReader::new(io::stdin().lock()), io::stdout().lock())?,
         _ => return Err(Error::Validation("command must be init, status, search, create, update, obsolete, briefing, handoff, sync, rebuild-index or mcp".to_string())),
     }

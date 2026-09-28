@@ -12,11 +12,11 @@ Edit another document only when one of these is also true:
 
 ## Where to continue
 
-Done: phase 1, project identity. initialize and start cover the seven scenarios in Feature: Project identity. The v1 contract is frozen in D-017, the engineering constitution is present, and the behavior specification has been reconciled with the Git and SQLite recovery model.
+Done: phases 1 through 7 are implemented on feature/agent-knowledge-v1: Markdown/TOML records, SQLite FTS5 recovery, Git synchronization, deterministic briefing and single active handoff, CLI, and stdio MCP. Local Linux evidence: cargo fmt --all --check, cargo clippy --all-targets -- -D warnings, cargo test --all-targets (33 tests), and cargo doc --no-deps passed. CI now runs Linux x86_64 and macOS aarch64 (macos-14); its dependency-audit job remains configured. cargo-audit was not present locally and its temporary installation did not complete in the available run.
 
-Next: one leader owns the feature/agent-knowledge-v1 worktree and delivers phases 2 through 7 as one BDD-driven pull request. Read this file, CONSTITUTION.md, docs/technical-decisions.md, docs/tech-design.md and spec/SPEC.md before editing. First verify the current branch, working tree and phase-1 tests. Then implement one phase at a time, add the matching Rust tests, run the phase quality gates, and keep one conventional English commit per phase. Do not start the real-repository pilot in phase 8 without explicit authorization.
+Next: review the single pull request, including CI results on both supported targets. Do not start the real-repository pilot in phase 8 without explicit authorization.
 
-Blocked: none for phases 2 through 7. Phase 8 is intentionally deferred because it changes real repository and agent configuration.
+Blocked: phase 8 is intentionally deferred because it changes real repository and agent configuration.
 
 ## Standing constraints
 
