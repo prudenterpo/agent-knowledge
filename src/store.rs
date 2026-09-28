@@ -8,7 +8,7 @@ use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{Error, Project};
+use crate::{Error, GitSync, Project};
 
 const RECORD_FORMAT: u64 = 1;
 const MAX_TITLE_BYTES: usize = 512;
@@ -132,15 +132,26 @@ struct Frontmatter {
 pub struct KnowledgeStore {
     project: Project,
     index_path: PathBuf,
+    git: Option<GitSync>,
 }
 
 impl KnowledgeStore {
     /// Open the derived index for a resolved project.
     pub fn open(project: Project) -> Result<Self, Error> {
         let index_path = project.memory_directory().join(".agent-knowledge.sqlite");
+        let repository = project.memory_directory().parent().map(Path::to_path_buf);
+        let git = repository
+            .as_deref()
+            .filter(|path| path.join(".git").is_dir())
+            .map(GitSync::open)
+            .transpose()?;
+        if let Some(git) = &git {
+            git.pull()?;
+        }
         let store = Self {
             project,
             index_path,
+            git,
         };
         store.ensure_records_directory()?;
         store.ensure_index()?;
@@ -168,15 +179,20 @@ impl KnowledgeStore {
             superseded_by: None,
             content: input.content.to_string(),
         };
-        if let Some(previous) = input.supersedes {
-            self.supersede_with(&record, previous)?;
-        }
         self.write_record(&record)?;
+        let mut changed = vec![self.record_path(&record.id)];
+        if let Some(previous) = input.supersedes {
+            let previous = self.superseded_record(&record, previous)?;
+            self.write_record(&previous)?;
+            changed.push(self.record_path(&previous.id));
+            self.index_record(&previous)?;
+        }
         if let Err(error) = self.index_record(&record) {
             return Err(Error::Index(format!(
                 "record was written but its local index update failed; restart to rebuild: {error}"
             )));
         }
+        self.commit_and_push(&changed, "create", &record.id)?;
         Ok(record)
     }
 
@@ -225,13 +241,21 @@ impl KnowledgeStore {
         if let Some(state) = change.state {
             record.state = state;
         }
-        if let Some(supersedes) = change.supersedes {
-            self.supersede_with(&record, supersedes)?;
-        }
+        let superseded = change
+            .supersedes
+            .map(|supersedes| self.superseded_record(&record, supersedes))
+            .transpose()?;
         record.revision += 1;
         record.updated = now()?;
         self.write_record(&record)?;
+        let mut changed = vec![self.record_path(&record.id)];
+        if let Some(previous) = &superseded {
+            self.write_record(previous)?;
+            changed.push(self.record_path(&previous.id));
+            self.index_record(previous)?;
+        }
         self.index_record(&record)?;
+        self.commit_and_push(&changed, "update", &record.id)?;
         Ok(record)
     }
 
@@ -387,7 +411,7 @@ impl KnowledgeStore {
         index_into(&connection, record)
     }
 
-    fn supersede_with(&self, replacement: &Record, previous_id: &str) -> Result<(), Error> {
+    fn superseded_record(&self, replacement: &Record, previous_id: &str) -> Result<Record, Error> {
         if replacement.id == previous_id {
             return Err(Error::Validation(
                 "a record cannot supersede itself".to_string(),
@@ -398,8 +422,27 @@ impl KnowledgeStore {
         previous.superseded_by = Some(replacement.id.clone());
         previous.revision += 1;
         previous.updated = now()?;
-        self.write_record(&previous)?;
-        self.index_record(&previous)
+        Ok(previous)
+    }
+
+    fn commit_and_push(&self, paths: &[PathBuf], operation: &str, id: &str) -> Result<(), Error> {
+        let Some(git) = &self.git else {
+            return Ok(());
+        };
+        let root = git.repository();
+        let paths = paths
+            .iter()
+            .map(|path| {
+                path.strip_prefix(root).map_err(|_| {
+                    Error::Internal("record path is outside the memory repository".to_string())
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        git.commit(&paths, &format!("feat(record): {operation} {id}"))?;
+        match git.push() {
+            Ok(()) | Err(Error::Synchronization(_)) => Ok(()),
+            Err(error) => Err(error),
+        }
     }
 }
 

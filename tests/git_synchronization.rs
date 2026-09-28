@@ -5,7 +5,9 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use agent_knowledge::{Error, GitSync};
+use agent_knowledge::{
+    CreateRecord, Error, GitSync, KnowledgeStore, RecordCategory, initialize, start,
+};
 
 struct TempDir(PathBuf);
 static NEXT_TEMPORARY: AtomicUsize = AtomicUsize::new(0);
@@ -293,4 +295,44 @@ fn the_sqlite_index_never_travels_through_git() {
     )
     .unwrap();
     assert_eq!(files.trim(), "record.md");
+}
+
+/// A knowledge write commits atomically without network
+#[test]
+fn a_knowledge_write_commits_atomically_without_network() {
+    let root = TempDir::new();
+    let memory = root.0.join("memory");
+    let code = root.0.join("code");
+    assert!(
+        git(None, &["init", &memory.to_string_lossy()])
+            .status
+            .success()
+    );
+    configure(&memory);
+    fs::create_dir(&code).unwrap();
+    initialize(&code, &memory).unwrap();
+    let store = KnowledgeStore::open(start(&code, &memory).unwrap()).unwrap();
+    store
+        .create(CreateRecord {
+            title: "Durable",
+            category: RecordCategory::Decision,
+            content: "local commit",
+            priority: None,
+            pinned: None,
+            supersedes: None,
+        })
+        .unwrap();
+    assert_eq!(
+        String::from_utf8(git(Some(&memory), &["rev-list", "--count", "HEAD"]).stdout)
+            .unwrap()
+            .trim(),
+        "1"
+    );
+    assert!(
+        !String::from_utf8(
+            git(Some(&memory), &["show", "--format=", "--name-only", "HEAD"]).stdout
+        )
+        .unwrap()
+        .contains("sqlite")
+    );
 }

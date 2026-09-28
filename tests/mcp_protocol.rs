@@ -53,6 +53,42 @@ fn handshake_announces_the_supported_tools() {
     assert!(output.contains("agent_knowledge_write_handoff"));
 }
 
+/// Tools are announced only for an initialized project
+#[test]
+fn tools_are_announced_only_for_an_initialized_project() {
+    let fixture = Fixture::new();
+    let output = call(
+        &fixture.store,
+        "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}\n",
+    );
+    assert!(output.contains("inputSchema"));
+    assert!(output.contains("agent_knowledge_create_record"));
+}
+
+/// MCP updates accept every writable record field
+#[test]
+fn mcp_updates_accept_every_writable_record_field() {
+    let fixture = Fixture::new();
+    let create = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"agent_knowledge_create_record\",\"arguments\":{\"title\":\"old\",\"category\":\"note\",\"content\":\"old\"}}}\n";
+    let output = call(&fixture.store, create);
+    let id = serde_json::from_str::<serde_json::Value>(&output).unwrap()["result"]["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let update = format!(
+        "{{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{{\"name\":\"agent_knowledge_update_record\",\"arguments\":{{\"id\":\"{id}\",\"expected_revision\":1,\"title\":\"new\",\"content\":\"new\",\"category\":\"decision\",\"priority\":3,\"pinned\":true,\"state\":\"active\"}}}}}}\n"
+    );
+    assert!(call(&fixture.store, &update).contains("\"revision\":2"));
+}
+
+/// MCP priority outside its range is rejected
+#[test]
+fn mcp_priority_outside_its_range_is_rejected() {
+    let fixture = Fixture::new();
+    let input = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"agent_knowledge_create_record\",\"arguments\":{\"title\":\"x\",\"category\":\"note\",\"content\":\"x\",\"priority\":256}}}\n";
+    assert!(call(&fixture.store, input).contains("priority"));
+}
+
 /// A malformed message returns a structured error
 #[test]
 fn a_malformed_message_returns_a_structured_error() {
