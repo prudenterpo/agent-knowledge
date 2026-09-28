@@ -121,7 +121,7 @@ This document holds **decisions only** — the "why". What the product is and wh
 
 **Reason:** Rust prevents many memory and concurrency failures, but it does not validate the MCP protocol, conflict semantics, cross-project access, persistence, dependencies or malformed input. Quality cannot rest on the compiler alone, nor on agent-generated code.
 
-**Consequences:** the domain and persistence core does not use unsafe Rust. Any unsafe or FFI lives in a small internal module with a documented safety contract and a specific test. MCP input must be bounded and validated; SQL queries must use prepared statements; logs must not store secrets or inappropriately sensitive content. In MCP mode, no library or error path may write diagnostics to stdout.
+**Consequences:** the domain and persistence core does not use unsafe Rust. Any unsafe or FFI lives in a small internal module with a documented safety contract and a specific test. MCP input must be bounded and validated; SQL queries must use prepared statements; logs must not store secrets or inappropriately sensitive content. In MCP mode, no library or error path may write diagnostics to stdout. The repository engineering constitution defines the idiomatic Rust, comment and review rules that make this baseline actionable.
 
 **Security posture following from this decision and D-015:**
 
@@ -202,6 +202,30 @@ Mechanically:
 
 **Consequences:** `initialize` creates the file by writing a temporary sibling and renaming it into place, then creates `{memory repository}/{id}` with mode `0700`. `start` reads the file from the working directory it is given and binds that run to that id. The memory repository's own name and location stay undecided; callers pass the path. Re-initializing a valid manifest keeps the original id and does not create a second directory.
 
+## D-017 — Frozen v1 interface, persistence and distribution contract
+
+**Decision:** the product, source repository, Cargo package and executable are named Agent Knowledge and agent-knowledge. The Rust library crate is agent_knowledge. The dedicated memory repository is named agent-knowledge-memory and is private. The source repository is private for v1 and is not published under a public license.
+
+The executable has these human CLI commands: init, status, search, create, update, obsolete, briefing, handoff, sync, rebuild-index and mcp. The mcp command starts the stdio server. The CLI remains non-interactive and uses explicit arguments; commands and errors are English.
+
+The MCP server exposes only tools bound to the project resolved at startup. Its tool names are agent_knowledge_briefing, agent_knowledge_search, agent_knowledge_get_record, agent_knowledge_create_record, agent_knowledge_update_record, agent_knowledge_write_handoff and agent_knowledge_list_handoffs. No MCP tool accepts a project identifier. Search takes a required query and optional include_obsolete and limit. Record creation takes title, category and content, with optional priority, pinned and supersedes. Record update takes id and expected_revision plus one or more changed writable fields. Handoff writing takes completed, pending, decisions_or_limitations and next_step, plus the expected revision when an active handoff exists. Read operations return record identity and revision so a later write can name the version it read.
+
+Knowledge files use TOML frontmatter delimited by +++. A record is stored at records/{uuid}.md and has exactly these required frontmatter fields: format, id, title, category, state, priority, pinned, revision, created and updated. superseded_by is the only optional record field. format is integer 1; id and superseded_by are lowercase UUID version 4; category is decision, gotcha, procedure or note; state is active or obsolete; priority is an integer from 0 through 3; pinned is boolean; revision starts at 1 and increases monotonically; created and updated are UTC timestamps in the format used by D-016. The body after the frontmatter is preserved byte-for-byte.
+
+The active handoff is handoffs/active.md. Replacing it moves the previous file to handoffs/{uuid}.md in the same commit and writes a new active file. A handoff has format, id, state, revision, created and updated frontmatter fields and uses four Markdown sections in its body: Completed, Pending, Decisions and limitations, and Next step.
+
+The system invokes the Git executable already installed on the machine rather than a Rust Git library. Source-repository commits follow the conventional format type(scope): English summary. Commits in the memory repository use the same format and identify the operation and immutable record or handoff identifier. No Git artifact carries agent attribution.
+
+The input limit for one MCP message is 1 MiB. A record title is at most 512 UTF-8 bytes; record content is at most 64 KiB; a query is at most 4 KiB; each handoff section is at most 16 KiB. Search returns at most 20 results. A rendered briefing is at most 16 KiB, with at most 4 KiB each for pinned content, decisions, gotchas and the active handoff; truncation is explicit and preserves valid UTF-8.
+
+SQLite uses WAL journal mode with a one-second busy timeout. The supported v1 artifacts are macOS aarch64 and Linux x86_64 native binaries. Development uses local Cargo builds; release binaries are produced in CI for those two targets. Agent configuration is documented manually in the repository rather than installed or modified automatically.
+
+The memory remote is private and record content must not include credentials, tokens, private keys or other secrets. Version 1 does not promise automatic secret detection; it rejects no content on the basis of a heuristic scanner. This is an explicit user responsibility, not a security guarantee delegated to a best-effort pattern match.
+
+**Reason:** the implementation cannot produce reliable behavior or stable tests while the public names, input bounds, storage schema and operational choices remain implicit. TOML is deliberately strict and consistent with the identity manifest. UUID file names avoid deriving paths from untrusted titles. Calling Git avoids an additional native library and FFI boundary in the first Rust implementation. The limits keep malformed input and briefing cost bounded while leaving enough room for useful operational knowledge.
+
+**Consequences:** these values are part of the v1 contract. Changing a frontmatter field, MCP tool schema, bounded limit or supported target requires a new decision, migration consideration and matching behavior scenarios. A later public release may add a license, targets or automated secret detection, but none is inferred by this version.
+
 ## Implementation sequence
 
 The implementation phases, and the scenarios each one must turn green, live in [the behavior specification](../spec/SPEC.md), not here — this document records decisions, not an execution plan.
@@ -210,18 +234,4 @@ After real use, and only then, it is worth reassessing: capture hooks (D-005), c
 
 ## Decisions not yet frozen
 
-The items below require an explicit choice or measurement before public contracts stabilize. **None of them may be inferred silently during implementation** — when implementation runs into one, it stops and asks.
-
-- the official name of the project and of the code repository;
-- the name and visibility of the Git repository dedicated to memory (recommended: private);
-- the visibility and license of the code repository;
-- the executable name and the CLI command names;
-- the exact Markdown frontmatter format: fields, names, serialization of dates and revision;
-- the names and schemas of the MCP tools;
-- the Rust library used to drive Git (shelling out to `git` vs. a crate such as `git2`) and what that implies for FFI/unsafe under D-010;
-- the file-naming strategy per record, avoiding names derived from untrusted content;
-- the exact input, result and briefing limits (D-012);
-- the local SQLite journal mode, after measurement;
-- the policy for detecting secrets in content (see D-010);
-- installation by binary, local compilation, or both;
-- automation or manual documentation of the agents' MCP configuration.
+There are no unresolved decisions that block the v1 implementation. Future changes to the frozen v1 contract require an explicit new decision rather than an implementation-time assumption.

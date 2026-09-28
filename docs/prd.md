@@ -86,7 +86,7 @@ Search is textual, through SQLite with FTS5 — an index kept locally on each ma
 
 ### Recording knowledge
 
-The agent can create and update structured records. A locally successful write stores the Markdown file, updates the local index and creates a commit — atomically: either all three happen, or none does. Making that write visible to the other machine also requires a successful push; if the push fails for lack of connectivity, the local write stays valid and visible locally (never silently lost), but the system states explicitly that it is not yet synchronized.
+The agent can create and update structured records. A locally successful write durably stores the authoritative Markdown file and makes it searchable through the local index before reporting success. The index is derived state, not part of the durable transaction: if a process interruption or index failure leaves it inconsistent, the next startup rebuilds it from the Markdown files before serving search. Phase 4 adds a Git commit containing the complete authoritative file change. Making that commit visible to the other machine also requires a successful push; if the push fails for lack of connectivity, the local write stays valid and visible locally (never silently lost), but the system states explicitly that it is not yet synchronized.
 
 Updates use an expected revision to detect concurrency: before writing, the client synchronizes with the remote repository and checks whether the record changed since it was last read. If it changed, the write is refused with an explicit conflict — it never silently accepts overwriting a version that was not read.
 
