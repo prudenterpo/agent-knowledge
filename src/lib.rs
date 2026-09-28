@@ -17,6 +17,10 @@
 
 mod error;
 mod identity;
+mod store;
 
 pub use error::Error;
 pub use identity::{FORMAT_VERSION, MANIFEST_FILE_NAME, Project, ProjectId, initialize, start};
+pub use store::{
+    CreateRecord, KnowledgeStore, Record, RecordCategory, RecordState, SearchResults, UpdateRecord,
+};
