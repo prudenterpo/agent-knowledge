@@ -12,9 +12,9 @@ Edit another document only when one of these is also true:
 
 ## Where to continue
 
-Done: phases 1 through 7 are implemented on feature/agent-knowledge-v1. The application core now orchestrates Git pull, durable file write, index update, record or handoff commit, and push; supersession persists the replacement before obsoleting its predecessor. MCP exposes structured tool contracts and all frozen update fields; CLI supports active-handoff revision input. Local Linux evidence: cargo fmt --all --check, cargo clippy --all-targets -- -D warnings, cargo test --all-targets (75 tests), and cargo doc --no-deps passed.
+Done: phases 1 through 7 are merged into develop through PR #5. The application core orchestrates Git pull, durable file write, index update, record or handoff commit, and push; supersession persists the replacement before obsoleting its predecessor. MCP exposes structured tool contracts and all frozen update fields; CLI supports active-handoff revision input. Local Linux evidence: cargo fmt --all --check, cargo clippy --all-targets -- -D warnings, cargo test --all-targets (75 tests), and cargo doc --no-deps passed. The stale remote feature and documentation references carried no unique patch and were removed after review.
 
-Next: wait for the final GitHub CI run on Linux x86_64, macOS aarch64 and dependency audit; then take PR #5 out of draft for Rodrigo's review. Do not merge it. Do not start phase 8 without explicit authorization.
+Next: review and use the merged v1 behavior from develop. Do not start phase 8 without explicit authorization.
 
 Blocked: phase 8 is intentionally deferred because it changes real repository and agent configuration.
 
@@ -22,4 +22,5 @@ Blocked: phase 8 is intentionally deferred because it changes real repository an
 
 - Never add AI-attribution lines to a commit, PR, issue, or comment. No "Co-Authored-By: Claude", no "Generated with Claude Code".
 - Source and memory-repository commits use type(scope): English summary. No Codex-, Claude- or agent-branded branch, commit, pull-request, issue or comment text is allowed.
+- Never use cursor/ in a branch name. Never write cursor in a commit message, pull request title or pull request body.
 - Do not reintroduce mention of another long-term-memory-for-agents project. Those references were removed on purpose.
