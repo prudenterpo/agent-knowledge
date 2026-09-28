@@ -336,3 +336,61 @@ fn a_knowledge_write_commits_atomically_without_network() {
         .contains("sqlite")
     );
 }
+
+/// A change by the other machine to the same record is a conflict
+#[test]
+fn a_change_by_the_other_machine_to_the_same_record_is_a_conflict() {
+    let root = TempDir::new();
+    let remote = root.0.join("remote.git");
+    assert!(
+        git(None, &["init", "--bare", &remote.to_string_lossy()])
+            .status
+            .success()
+    );
+    let first = root.0.join("first");
+    let second = root.0.join("second");
+    GitSync::clone_if_missing(&remote.to_string_lossy(), &first).unwrap();
+    configure(&first);
+    let sync_first = GitSync::open(&first).unwrap();
+    fs::write(first.join("record.md"), "one").unwrap();
+    sync_first
+        .commit(&[Path::new("record.md")], "feat(record): create one")
+        .unwrap();
+    sync_first.push().unwrap();
+    GitSync::clone_if_missing(&remote.to_string_lossy(), &second).unwrap();
+    configure(&second);
+    let sync_second = GitSync::open(&second).unwrap();
+    fs::write(first.join("record.md"), "remote version").unwrap();
+    sync_first
+        .commit(&[Path::new("record.md")], "feat(record): update remote")
+        .unwrap();
+    sync_first.push().unwrap();
+    fs::write(second.join("record.md"), "local version").unwrap();
+    sync_second
+        .commit(&[Path::new("record.md")], "feat(record): update local")
+        .unwrap();
+    assert!(matches!(
+        sync_second.push(),
+        Err(Error::RevisionConflict(_))
+    ));
+}
+
+/// Local clone and index are created with restricted permissions
+#[cfg(unix)]
+#[test]
+fn local_clone_and_index_are_created_with_restricted_permissions() {
+    use std::os::unix::fs::PermissionsExt;
+    let root = TempDir::new();
+    let remote = root.0.join("remote.git");
+    assert!(
+        git(None, &["init", "--bare", &remote.to_string_lossy()])
+            .status
+            .success()
+    );
+    let clone = root.0.join("clone");
+    GitSync::clone_if_missing(&remote.to_string_lossy(), &clone).unwrap();
+    assert_eq!(
+        fs::metadata(clone).unwrap().permissions().mode() & 0o777,
+        0o700
+    );
+}

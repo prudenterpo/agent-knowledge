@@ -12,11 +12,11 @@ Edit another document only when one of these is also true:
 
 ## Where to continue
 
-Done: the feature/agent-knowledge-v1 branch contains the phase-2-to-7 core and adapter implementation. Local Linux evidence: cargo fmt --all --check, cargo clippy --all-targets -- -D warnings, cargo test --all-targets (40 tests), and cargo doc --no-deps passed. GitHub CI passed Linux x86_64, macOS aarch64 (macos-14), and dependency audit.
+Done: phases 1 through 7 are implemented on feature/agent-knowledge-v1. The application core now orchestrates Git pull, durable file write, index update, record or handoff commit, and push; supersession persists the replacement before obsoleting its predecessor. MCP exposes structured tool contracts and all frozen update fields; CLI supports active-handoff revision input. Local Linux evidence: cargo fmt --all --check, cargo clippy --all-targets -- -D warnings, cargo test --all-targets (75 tests), and cargo doc --no-deps passed.
 
-Next: complete the remaining one-test-per-scenario coverage before requesting review: record interruption/newer-schema and all search ordering/bounds scenarios; the remaining Git synchronization scenarios and automatic write-to-commit coupling; briefing limits/quotas; handoff failure/revision scenarios; CLI exit-code/operation scenarios; and MCP initialization, size, diagnostics, and serialization scenarios. Do not start the real-repository pilot in phase 8 without explicit authorization.
+Next: wait for the final GitHub CI run on Linux x86_64, macOS aarch64 and dependency audit; then take PR #5 out of draft for Rodrigo's review. Do not merge it. Do not start phase 8 without explicit authorization.
 
-Blocked: phase 8 is intentionally deferred because it changes real repository and agent configuration. The current PR is not ready to merge until the listed BDD coverage is completed.
+Blocked: phase 8 is intentionally deferred because it changes real repository and agent configuration.
 
 ## Standing constraints
 
