@@ -15,13 +15,17 @@
 //! Behavior is specified in `spec/SPEC.md`. Every scenario there is meant to
 //! become a test whose name matches the scenario name exactly.
 
+mod briefing;
 mod error;
 mod git_sync;
+mod handoff;
 mod identity;
 mod store;
 
+pub use briefing::render as render_briefing;
 pub use error::Error;
 pub use git_sync::GitSync;
+pub use handoff::{Handoff, HandoffStore, WriteHandoff};
 pub use identity::{FORMAT_VERSION, MANIFEST_FILE_NAME, Project, ProjectId, initialize, start};
 pub use store::{
     CreateRecord, KnowledgeStore, Record, RecordCategory, RecordState, SearchResults, UpdateRecord,
