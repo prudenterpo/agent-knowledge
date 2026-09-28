@@ -12,11 +12,11 @@ Edit another document only when one of these is also true:
 
 ## Where to continue
 
-Done: phases 1 through 7 are implemented on feature/agent-knowledge-v1: Markdown/TOML records, SQLite FTS5 recovery, Git synchronization, deterministic briefing and single active handoff, CLI, and stdio MCP. Local Linux evidence: cargo fmt --all --check, cargo clippy --all-targets -- -D warnings, cargo test --all-targets (40 tests), and cargo doc --no-deps passed. CI now runs Linux x86_64 and macOS aarch64 (macos-14); its dependency-audit job remains configured. cargo-audit was not present locally and its temporary installation did not complete in the available run.
+Done: the feature/agent-knowledge-v1 branch contains the phase-2-to-7 core and adapter implementation. Local Linux evidence: cargo fmt --all --check, cargo clippy --all-targets -- -D warnings, cargo test --all-targets (40 tests), and cargo doc --no-deps passed. GitHub CI passed Linux x86_64, macOS aarch64 (macos-14), and dependency audit.
 
-Next: review the single pull request, including CI results on both supported targets. Do not start the real-repository pilot in phase 8 without explicit authorization.
+Next: complete the remaining one-test-per-scenario coverage before requesting review: record interruption/newer-schema and all search ordering/bounds scenarios; the remaining Git synchronization scenarios and automatic write-to-commit coupling; briefing limits/quotas; handoff failure/revision scenarios; CLI exit-code/operation scenarios; and MCP initialization, size, diagnostics, and serialization scenarios. Do not start the real-repository pilot in phase 8 without explicit authorization.
 
-Blocked: phase 8 is intentionally deferred because it changes real repository and agent configuration.
+Blocked: phase 8 is intentionally deferred because it changes real repository and agent configuration. The current PR is not ready to merge until the listed BDD coverage is completed.
 
 ## Standing constraints
 
