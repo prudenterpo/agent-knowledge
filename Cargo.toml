@@ -6,14 +6,19 @@ description = "Operational memory for code repositories, shared between machines
 readme = "README.md"
 publish = false
 
-# No [[bin]] target yet: the executable and CLI command names are still undecided.
-# See the pending-decisions list in the project documentation before adding one.
+[[bin]]
+name = "agent-knowledge"
+path = "src/main.rs"
 
 [lib]
 name = "agent_knowledge"
 path = "src/lib.rs"
 
 [dependencies]
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+serde = { version = "1.0.228", features = ["derive"] }
+toml = "0.9.8"
+uuid = { version = "1.18.1", features = ["v4"] }
 
 [lints.rust]
 # D-010: the domain and persistence core stays in safe Rust. Unsafe is allowed only

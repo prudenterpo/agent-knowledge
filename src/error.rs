@@ -15,15 +15,38 @@ pub enum Error {
     InvalidIdentity(String),
     /// A local filesystem operation failed.
     Persistence(String),
+    /// Caller-supplied data violates the frozen v1 contract.
+    Validation(String),
+    /// A record has changed since the caller read the revision it names.
+    RevisionConflict(String),
+    /// A record id does not exist in the bound project.
+    NotFound(String),
+    /// A file uses a record schema this client cannot safely read.
+    IncompatibleSchema(String),
+    /// The local SQLite index cannot be used.
+    Index(String),
+    /// Synchronization could not complete; local durable work may still exist.
+    Synchronization(String),
+    /// A transport request is malformed.
+    Protocol(String),
+    /// An unexpected failure that adapters may map separately.
+    Internal(String),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::NotInitialized => formatter.write_str("project is not initialized"),
-            Error::InvalidIdentity(detail) | Error::Persistence(detail) => {
-                formatter.write_str(detail)
-            }
+            Error::InvalidIdentity(detail)
+            | Error::Persistence(detail)
+            | Error::Validation(detail)
+            | Error::RevisionConflict(detail)
+            | Error::NotFound(detail)
+            | Error::IncompatibleSchema(detail)
+            | Error::Index(detail)
+            | Error::Synchronization(detail)
+            | Error::Protocol(detail)
+            | Error::Internal(detail) => formatter.write_str(detail),
         }
     }
 }
