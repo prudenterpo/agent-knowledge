@@ -74,7 +74,9 @@ The core does not know about JSON-RPC, terminal arguments or stdout. It also doe
 - open and configure the local SQLite index;
 - rebuild that index entirely from the files, on demand or when detected stale/corrupted;
 - run prepared statements for search;
-- keep file and index consistent: a write is only complete locally once both have been updated and the commit created;
+- make a newly written authoritative file searchable through the index before reporting local success;
+- rebuild the derived index from the authoritative files after an interruption or index failure, rather than attempting a cross-system transaction with Git and SQLite;
+- in the synchronization phase, create one Git commit containing the complete authoritative file change;
 - implement expected revision, comparing the read state against the file's state after a pull.
 
 The SQLite library used for the local index needs FTS5 enabled, on macOS and on Linux. Native access sits behind a safe Rust abstraction.
@@ -99,9 +101,10 @@ Persists, as a Markdown file in the memory repository: completed work, pending w
 ### Git synchronization
 
 - clone the memory repository on the machine's first run;
-- run `pull` before any read that feeds search or the briefing, and before any write;
+- attempt `pull` before any read that feeds search or the briefing, and before any write; when the remote is unavailable, continue from the last local state and mark it as potentially stale;
 - detect, on `pull`, whether the target file changed since it was last known-read — that is how "expected revision" works between machines;
-- create atomic, deterministic commits, one per write, with a standardized message;
+- create deterministic commits, one per write, containing the complete authoritative file change; SQLite index files never enter those commits;
+- stop on a Git content conflict and report the affected files; it never attempts automatic content merging;
 - try `push` after each commit and clearly report a connectivity failure, leaving the local commit intact;
 - never force-push destructively, never rewrite history;
 - use the Git credentials already configured on the machine, without managing secrets of its own.

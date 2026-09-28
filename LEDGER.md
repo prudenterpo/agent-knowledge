@@ -12,13 +12,14 @@ Edit another document only when one of these is also true:
 
 ## Where to continue
 
-Done: phase 1, project identity. `initialize` and `start` cover the seven scenarios in `Feature: Project identity`.
+Done: phase 1, project identity. initialize and start cover the seven scenarios in Feature: Project identity. The v1 contract is frozen in D-017, the engineering constitution is present, and the behavior specification has been reconciled with the Git and SQLite recovery model.
 
-Next: phase 2, records on disk and the SQLite index, as `spec/SPEC.md` describes it.
+Next: one leader owns the feature/agent-knowledge-v1 worktree and delivers phases 2 through 7 as one BDD-driven pull request. Read this file, CONSTITUTION.md, docs/technical-decisions.md, docs/tech-design.md and spec/SPEC.md before editing. First verify the current branch, working tree and phase-1 tests. Then implement one phase at a time, add the matching Rust tests, run the phase quality gates, and keep one conventional English commit per phase. Do not start the real-repository pilot in phase 8 without explicit authorization.
 
-Blocked: the frontmatter field names and the record file-naming strategy are still on the pending list. Do not invent them.
+Blocked: none for phases 2 through 7. Phase 8 is intentionally deferred because it changes real repository and agent configuration.
 
 ## Standing constraints
 
 - Never add AI-attribution lines to a commit, PR, issue, or comment. No "Co-Authored-By: Claude", no "Generated with Claude Code".
+- Source and memory-repository commits use type(scope): English summary. No Codex-, Claude- or agent-branded branch, commit, pull-request, issue or comment text is allowed.
 - Do not reintroduce mention of another long-term-memory-for-agents project. Those references were removed on purpose.
