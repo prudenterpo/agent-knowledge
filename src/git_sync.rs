@@ -56,6 +56,9 @@ impl GitSync {
 
     /// Pull remote history without rewriting local history.
     pub fn pull(&self) -> Result<(), Error> {
+        if remote_names(&self.repository)?.is_empty() {
+            return Ok(());
+        }
         run_git(Some(&self.repository), &["pull", "--ff-only"])
     }
 
@@ -91,6 +94,22 @@ impl GitSync {
     #[must_use]
     pub fn repository(&self) -> &Path {
         &self.repository
+    }
+}
+
+fn remote_names(repository: &Path) -> Result<String, Error> {
+    let output = Command::new("git")
+        .current_dir(repository)
+        .args(["remote"])
+        .output()
+        .map_err(persistence)?;
+    if output.status.success() {
+        String::from_utf8(output.stdout)
+            .map_err(|_| Error::Internal("Git remote output was not UTF-8".to_string()))
+    } else {
+        Err(Error::Synchronization(
+            "could not inspect Git remotes".to_string(),
+        ))
     }
 }
 

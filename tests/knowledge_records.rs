@@ -401,3 +401,37 @@ fn result_set_is_bounded_and_reports_truncation() {
     assert_eq!(result.records.len(), 20);
     assert!(result.truncated);
 }
+
+/// Results are ordered by textual relevance first
+#[test]
+fn results_are_ordered_by_textual_relevance_first() {
+    let root = TempDir::new();
+    let store = store(&root, "code");
+    let strong = create(&store, "exact phrase", "exact phrase exact phrase");
+    create(&store, "weak", "exact");
+    assert_eq!(
+        store.search("exact phrase", false, None).unwrap().records[0].id,
+        strong.id
+    );
+}
+
+/// Priority only adjusts, never overrides relevance
+#[test]
+fn priority_only_adjusts_never_overrides_relevance() {
+    let root = TempDir::new();
+    let store = store(&root, "code");
+    store
+        .create(CreateRecord {
+            title: "irrelevant",
+            category: RecordCategory::Note,
+            content: "nothing",
+            priority: Some(3),
+            pinned: None,
+            supersedes: None,
+        })
+        .unwrap();
+    let matching = create(&store, "match", "target words");
+    let result = store.search("target", false, None).unwrap();
+    assert_eq!(result.records.len(), 1);
+    assert_eq!(result.records[0].id, matching.id);
+}

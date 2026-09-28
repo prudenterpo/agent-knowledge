@@ -44,7 +44,11 @@ fn handle(store: &KnowledgeStore, line: &str) -> Value {
     let id = request.get("id").cloned().unwrap_or(Value::Null);
     let method = request.get("method").and_then(Value::as_str).unwrap_or("");
     let result = match method {
-        "initialize" | "tools/list" => Ok(json!({"tools": tool_names()})),
+        "initialize" => Ok(
+            json!({"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"agent-knowledge","version":"0.0.0"},"tools":tool_definitions()}),
+        ),
+        "notifications/initialized" => Ok(Value::Null),
+        "tools/list" => Ok(json!({"tools": tool_definitions()})),
         "tools/call" => call_tool(store, request.get("params").unwrap_or(&Value::Null)),
         _ => Err(Error::Protocol("unknown MCP method".to_string())),
     };
@@ -85,10 +89,7 @@ fn call_tool(store: &KnowledgeStore, params: &Value) -> Result<Value, Error> {
                 title: string(arguments, "title")?,
                 category: category(string(arguments, "category")?)?,
                 content: string(arguments, "content")?,
-                priority: arguments
-                    .get("priority")
-                    .and_then(Value::as_u64)
-                    .map(|value| value as u8),
+                priority: optional_priority(arguments)?,
                 pinned: arguments.get("pinned").and_then(Value::as_bool),
                 supersedes: arguments.get("supersedes").and_then(Value::as_str),
             })?;
@@ -105,11 +106,19 @@ fn call_tool(store: &KnowledgeStore, params: &Value) -> Result<Value, Error> {
                 UpdateRecord {
                     content: arguments.get("content").and_then(Value::as_str),
                     title: arguments.get("title").and_then(Value::as_str),
-                    priority: arguments
-                        .get("priority")
-                        .and_then(Value::as_u64)
-                        .map(|value| value as u8),
-                    ..UpdateRecord::default()
+                    priority: optional_priority(arguments)?,
+                    category: arguments
+                        .get("category")
+                        .and_then(Value::as_str)
+                        .map(category)
+                        .transpose()?,
+                    pinned: arguments.get("pinned").and_then(Value::as_bool),
+                    state: arguments
+                        .get("state")
+                        .and_then(Value::as_str)
+                        .map(state)
+                        .transpose()?,
+                    supersedes: arguments.get("supersedes").and_then(Value::as_str),
                 },
             )?;
             Ok(record_json(&record))
@@ -151,7 +160,31 @@ fn category(value: &str) -> Result<RecordCategory, Error> {
         )),
     }
 }
-fn tool_names() -> Vec<&'static str> {
+fn state(value: &str) -> Result<crate::RecordState, Error> {
+    match value {
+        "active" => Ok(crate::RecordState::Active),
+        "obsolete" => Ok(crate::RecordState::Obsolete),
+        _ => Err(Error::Validation(
+            "state must be active or obsolete".to_string(),
+        )),
+    }
+}
+fn optional_priority(arguments: &Value) -> Result<Option<u8>, Error> {
+    arguments
+        .get("priority")
+        .map(|value| {
+            value
+                .as_u64()
+                .ok_or_else(|| Error::Validation("priority must be an integer".to_string()))
+                .and_then(|value| {
+                    u8::try_from(value).map_err(|_| {
+                        Error::Validation("priority must be from 0 through 3".to_string())
+                    })
+                })
+        })
+        .transpose()
+}
+fn tool_definitions() -> Vec<Value> {
     vec![
         "agent_knowledge_briefing",
         "agent_knowledge_search",
@@ -160,7 +193,7 @@ fn tool_names() -> Vec<&'static str> {
         "agent_knowledge_update_record",
         "agent_knowledge_write_handoff",
         "agent_knowledge_list_handoffs",
-    ]
+    ].into_iter().map(|name| json!({"name":name,"description":"Agent Knowledge operation","inputSchema":{"type":"object","additionalProperties":false}})).collect()
 }
 fn record_json(record: &crate::Record) -> Value {
     json!({"id":record.id,"title":record.title,"category":format!("{:?}",record.category).to_lowercase(),"revision":record.revision,"content":record.content})

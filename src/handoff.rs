@@ -8,7 +8,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{Error, Project};
+use crate::{Error, GitSync, Project};
 
 /// Input required for a handoff.
 pub struct WriteHandoff<'a> {
@@ -52,19 +52,27 @@ struct Frontmatter {
 /// Handoff persistence bound to one project.
 pub struct HandoffStore {
     directory: PathBuf,
+    git: Option<GitSync>,
 }
 
 impl HandoffStore {
     /// Construct a handoff store for a resolved project.
     #[must_use]
     pub fn new(project: &Project) -> Self {
+        let repository = project.memory_directory().parent();
         Self {
             directory: project.memory_directory().join("handoffs"),
+            git: repository
+                .filter(|path| path.join(".git").is_dir())
+                .and_then(|path| GitSync::open(path).ok()),
         }
     }
 
     /// Read the active handoff when one exists.
     pub fn active(&self) -> Result<Option<Handoff>, Error> {
+        if let Some(git) = &self.git {
+            git.pull()?;
+        }
         let path = self.directory.join("active.md");
         if !path.exists() {
             return Ok(None);
@@ -98,7 +106,7 @@ impl HandoffStore {
             updated: timestamp,
             content: render_body(&input),
         };
-        if let Some(mut previous) = previous {
+        if let Some(mut previous) = previous.clone() {
             previous.active = false;
             previous.updated = next.updated.clone();
             write_atomic(
@@ -107,6 +115,7 @@ impl HandoffStore {
             )?;
         }
         write_atomic(&self.directory.join("active.md"), &render_handoff(&next)?)?;
+        self.commit_and_push(&next, previous.as_ref())?;
         Ok(next)
     }
 
@@ -129,6 +138,32 @@ impl HandoffStore {
                 .then_with(|| left.id.cmp(&right.id))
         });
         Ok(handoffs)
+    }
+}
+
+impl HandoffStore {
+    fn commit_and_push(&self, next: &Handoff, previous: Option<&Handoff>) -> Result<(), Error> {
+        let Some(git) = &self.git else {
+            return Ok(());
+        };
+        let root = git.repository();
+        let mut paths = vec![self.directory.join("active.md")];
+        if let Some(previous) = previous {
+            paths.push(self.directory.join(format!("{}.md", previous.id)));
+        }
+        let paths = paths
+            .iter()
+            .map(|path| {
+                path.strip_prefix(root).map_err(|_| {
+                    Error::Internal("handoff path is outside the memory repository".to_string())
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        git.commit(&paths, &format!("feat(handoff): write {}", next.id))?;
+        match git.push() {
+            Ok(()) | Err(Error::Synchronization(_)) => Ok(()),
+            Err(error) => Err(error),
+        }
     }
 }
 
