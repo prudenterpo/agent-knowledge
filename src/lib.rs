@@ -20,6 +20,7 @@ mod error;
 mod git_sync;
 mod handoff;
 mod identity;
+mod mcp;
 mod store;
 
 pub use briefing::render as render_briefing;
@@ -27,6 +28,7 @@ pub use error::Error;
 pub use git_sync::GitSync;
 pub use handoff::{Handoff, HandoffStore, WriteHandoff};
 pub use identity::{FORMAT_VERSION, MANIFEST_FILE_NAME, Project, ProjectId, initialize, start};
+pub use mcp::serve as serve_mcp;
 pub use store::{
     CreateRecord, KnowledgeStore, Record, RecordCategory, RecordState, SearchResults, UpdateRecord,
 };
