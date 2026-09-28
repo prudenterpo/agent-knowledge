@@ -314,3 +314,90 @@ fn obsolete_records_are_excluded_unless_requested() {
         2
     );
 }
+
+/// An interrupted index update is recovered from Markdown
+#[test]
+fn an_interrupted_index_update_is_recovered_from_markdown() {
+    let root = TempDir::new();
+    let store = store(&root, "code");
+    let record = create(&store, "Durable", "markdown survives index failure");
+    fs::remove_file(store.index_path()).unwrap();
+    let reopened = KnowledgeStore::open(
+        start(&root.path().join("code"), &root.path().join("memory")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        reopened.search("survives", false, None).unwrap().records[0].id,
+        record.id
+    );
+}
+
+/// A frontmatter format newer than supported is refused per file
+#[test]
+fn a_frontmatter_format_newer_than_supported_is_refused_per_file() {
+    let root = TempDir::new();
+    let store = store(&root, "code");
+    let valid = create(&store, "Valid", "kept readable");
+    let path = store
+        .project()
+        .memory_directory()
+        .join("records")
+        .join("550e8400-e29b-41d4-a716-446655440000.md");
+    fs::write(path, "+++\nformat = 2\nid = \"550e8400-e29b-41d4-a716-446655440000\"\ntitle = \"future\"\ncategory = \"note\"\nstate = \"active\"\npriority = 0\npinned = false\nrevision = 1\ncreated = \"2026-09-28T00:00:00Z\"\nupdated = \"2026-09-28T00:00:00Z\"\n+++\nfuture").unwrap();
+    store.rebuild_index().unwrap();
+    assert_eq!(
+        store.search("readable", false, None).unwrap().records[0].id,
+        valid.id
+    );
+}
+
+/// Search is limited to the current project
+#[test]
+fn search_is_limited_to_the_current_project() {
+    let root = TempDir::new();
+    let first = store(&root, "first");
+    let second = store(&root, "second");
+    create(&first, "First", "shared words");
+    create(&second, "Second", "shared words");
+    assert_eq!(
+        first.search("shared", false, None).unwrap().records.len(),
+        1
+    );
+}
+
+/// Ties break deterministically
+#[test]
+fn ties_break_deterministically() {
+    let root = TempDir::new();
+    let store = store(&root, "code");
+    create(&store, "Same", "identical query");
+    create(&store, "Same", "identical query");
+    let first = store
+        .search("identical", false, None)
+        .unwrap()
+        .records
+        .into_iter()
+        .map(|record| record.id)
+        .collect::<Vec<_>>();
+    let second = store
+        .search("identical", false, None)
+        .unwrap()
+        .records
+        .into_iter()
+        .map(|record| record.id)
+        .collect::<Vec<_>>();
+    assert_eq!(first, second);
+}
+
+/// Result set is bounded and reports truncation
+#[test]
+fn result_set_is_bounded_and_reports_truncation() {
+    let root = TempDir::new();
+    let store = store(&root, "code");
+    for number in 0..21 {
+        create(&store, &format!("Record {number}"), "common query");
+    }
+    let result = store.search("common", false, None).unwrap();
+    assert_eq!(result.records.len(), 20);
+    assert!(result.truncated);
+}
