@@ -1,16 +1,8 @@
 # Agent Knowledge
 
-Picking this up, in any thread, for any reason? Read [`LEDGER.md`](LEDGER.md) first — it is the current state, replaced every time a session ends, not an ongoing log.
-
 Operational memory for a code repository: what was decided and why, which traps were already hit, which procedures worked, and where the last session stopped.
 
 Agents read and write it over [MCP](https://modelcontextprotocol.io); a human reads and writes it over a CLI. Knowledge is stored as Markdown files in a dedicated Git repository, so it travels between machines through Git itself — there is no server and no always-on process.
-
-## Status
-
-**Foundation only.** No behavior is implemented yet. `spec/SPEC.md` holds the behavior contract and the implementation phases; nothing in this repository claims to work beyond building cleanly.
-
-Product scope: [`docs/prd.md`](docs/prd.md). Why each technical choice was made: [`docs/technical-decisions.md`](docs/technical-decisions.md). Component structure: [`docs/tech-design.md`](docs/tech-design.md).
 
 ## Shape of the system
 
@@ -32,4 +24,6 @@ CI runs the same three on Ubuntu and macOS, plus a dependency audit.
 
 ## Working on this repository
 
-`spec/SPEC.md` is the source of truth for behavior and how to implement it. Several public names are deliberately undecided — see the pending list at the end of `docs/technical-decisions.md` — and must not be invented while implementing.
+[`spec/SPEC.md`](spec/SPEC.md) is the behavior contract. [`LEDGER.md`](LEDGER.md) is the handoff: what is done, what is next, and what is blocked. Update that section when it would otherwise send the next thread the wrong way. Do not repeat it in the other documents.
+
+Product scope: [`docs/prd.md`](docs/prd.md). Why a choice was made: [`docs/technical-decisions.md`](docs/technical-decisions.md). Component structure: [`docs/tech-design.md`](docs/tech-design.md). Names on the pending list at the end of the decision log must not be invented while implementing.

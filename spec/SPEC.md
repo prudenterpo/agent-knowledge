@@ -1,20 +1,23 @@
 # Agent Knowledge — behavior specification
 
-Source of truth for **behavior**. If behavior changes, change the scenario here first. If you have not read [`../LEDGER.md`](../LEDGER.md) yet, read that first instead — it says which phase is current.
+Source of truth for **behavior**. Change a scenario when it is wrong or incomplete. Leave this file alone when the code already follows it.
 
-- Why each technical choice was made, including every `D-xxx` reference below: [technical decisions](../docs/technical-decisions.md).
+- Why a technical choice was made, including every `D-xxx` reference below: [technical decisions](../docs/technical-decisions.md).
 - Product scope, users and non-goals: [product requirements](../docs/prd.md).
 - Component structure and data model: [technical design](../docs/tech-design.md).
+- Engineering and code-writing rules: [engineering constitution](../CONSTITUTION.md).
+- Handoff for the next thread, and when any other document edit is worth making: [`../LEDGER.md`](../LEDGER.md).
 
 ## How to implement with an AI agent
 
 1. Take the next phase below. Do not skip ahead.
 2. For each scenario in that phase, write a Rust test whose name (or `///` doc line) matches the scenario name exactly.
 3. Make it pass. **Do not add the `cucumber` crate**: Gherkin is the spec, `cargo test` is the runner. Every dependency needs justification (D-001, D-010).
-4. One commit per phase. Do not add task files, status docs or process scaffolding to "organize the work".
-5. If a scenario turns out to be wrong or impossible, change the scenario here and say so — never leave code and spec disagreeing.
+4. The pull request is the code and the tests. One commit for the phase is enough. Do not add a task file or a write-up of what happened.
+5. Before ending the phase, update **Where to continue** in [`../LEDGER.md`](../LEDGER.md): what is done, what is next, and what is blocked. That is the handoff. Do not repeat it in the README, the PRD, the technical design, or the decision log. Edit one of those only in the other cases the LEDGER lists: a wrong scenario, a name that was just decided, or a learning the diff does not show.
+6. Follow the engineering constitution. Prefer clear code over explanatory comments; use a comment only for an invariant, a non-obvious reason, a safety condition or an external constraint.
 
-Names still frozen as undecided (crate name, executable name, CLI command names, MCP tool names, manifest filename, frontmatter field names) must not be invented while implementing. See the pending list in the decision log.
+The names, storage schema, limits, tool schemas and operational choices for v1 are frozen in D-016 and D-017. Implement them exactly; do not rename or extend them during a phase without an explicit new decision.
 
 ## When knowledge should be registered
 
@@ -30,9 +33,9 @@ Each phase lists the scenarios that must be green before moving on. Order matter
 
 ### 0. Skeleton
 
-Cargo package, reproducible build on macOS and Linux, formatting, lint without warnings, test harness, dependency audit wired in from the first commit (D-010).
+Cargo package, reproducible build on macOS and Linux, formatting, lint without warnings, test harness, documentation build and dependency audit wired in from the first commit (D-010 and the engineering constitution).
 
-Splitting into workspace members waits until the executable and CLI names are decided, so the foundation ships a library target only.
+The foundation ships both the agent_knowledge library target and the agent-knowledge executable defined in D-017. Workspace splitting remains deferred until it solves a demonstrated ownership or build problem.
 
 No scenarios. Done when `cargo fmt --all --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --all-targets` and the dependency audit all run clean on both platforms.
 
@@ -44,7 +47,7 @@ Scenarios: all of `Feature: Project identity`.
 
 ### 2. Records on disk, index in SQLite
 
-Markdown files with frontmatter as the source of truth; SQLite + FTS5 built from them; create, update, obsolete, supersede. Expected revision **within one machine** only — no Git yet.
+Markdown files with frontmatter as the source of truth; SQLite + FTS5 built from them; create, update, obsolete, supersede. Expected revision **within one machine** only — no Git yet. A successful write is searchable immediately; an interrupted or failed index update is recovered by rebuilding the derived index from Markdown on the next start.
 
 Scenarios: `Feature: Knowledge records`, plus `Feature: Search` except the rebuild scenario.
 
@@ -159,10 +162,11 @@ Feature: Knowledge records
   I want to record durable knowledge with explicit state
   So that a later session can trust what it reads and know what is stale
 
-  Scenario: Creating a record writes a Markdown file with frontmatter
+  Scenario: Creating a record writes a versioned TOML frontmatter file
     Given an initialized project
     When I create a record with a title, a category and Markdown content
-    Then a Markdown file is written in that project's directory
+    Then a Markdown file named after the record UUID is written in that project's records directory
+    And its frontmatter uses the D-017 delimiter and required schema version 1 fields
     And its frontmatter carries an immutable id, category, state active, priority, revision and timestamps
     And the file body is the Markdown content unchanged
 
@@ -181,10 +185,17 @@ Feature: Knowledge records
     When I create a record with a category other than decision, gotcha, procedure or note
     Then the operation fails with a structured validation error
 
-  Scenario: Creating a record updates the local index in the same operation
+  Scenario: Creating a record is searchable before local success
     When I create a record
     Then the record is findable by search without any further command
-    And file, index and commit were all produced, or none of them was
+    And a Markdown file is the durable source of that record
+
+  Scenario: An interrupted index update is recovered from Markdown
+    Given a record whose Markdown file was durably written
+    And the local index update was interrupted or failed
+    When the next client starts
+    Then the local index is rebuilt from the Markdown files
+    And the record is findable by search
 
   Scenario: Updating a record requires the expected revision
     Given an existing record at revision N
@@ -429,7 +440,7 @@ Feature: Git synchronization
   Scenario: A rejected push surfaces as a conflict, not a generic error
     Given a local commit created against a stale remote state
     When the push is rejected
-    Then the error names the diverging record
+    Then the error names the affected files when Git provides them
     And it is reported as a conflict, distinct from loss of connectivity
 
   Scenario: History is never rewritten
@@ -492,8 +503,14 @@ Feature: CLI
   Scenario: Forcing synchronization is available as its own operation
     Given records written locally but not yet pushed
     When I ask the CLI to synchronize
-    Then it pulls, resolves what it can, and pushes
+    Then it pulls fast-forward changes when possible and pushes pending commits
     And it reports what, if anything, is still unsynchronized
+
+  Scenario: Content conflicts require an explicit resolution
+    Given a synchronization that encounters a Git content conflict
+    When I ask the CLI to synchronize
+    Then no record content is merged automatically
+    And the command reports the affected files and exits with the code for conflict
 
   Scenario: Rebuilding the index is available as its own operation
     Given a local index believed to be stale or corrupted
@@ -513,7 +530,7 @@ Feature: MCP protocol
   Scenario: Handshake announces the supported tools
     Given an initialized project
     When a host performs the MCP handshake
-    Then the server announces its tool set
+    Then the server announces exactly the D-017 tool set and schemas
 
   Scenario: Tools are announced only for an initialized project
     Given a directory with no manifest
